@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useWeb3Context, Connectors } from 'web3-react'
 import styled from 'styled-components'
-import { ethers } from 'ethers'
 import { useTranslation } from 'react-i18next'
 import { isMobile } from 'react-device-detect'
 
@@ -32,8 +31,8 @@ const SpinnerWrapper = styled(Spinner)`
 `
 
 function tryToSetConnector(setConnector, setError) {
-  setConnector('Injected', { suppressAndThrowErrors: true }).catch(() => {
-    setConnector('Network', { suppressAndThrowErrors: true }).catch(error => {
+  setConnector('Injected', { suppressAndThrowErrors: false }).catch(() => {
+    setConnector('Network', { suppressAndThrowErrors: false }).catch(error => {
       setError(error)
     })
   })
@@ -51,19 +50,12 @@ export default function Web3ReactManager({ children }) {
         if (isMobile) {
           tryToSetConnector(setConnector, setError)
         } else {
-          const library = new ethers.providers.Web3Provider(window.ethereum || window.web3)
-          library.listAccounts().then(accounts => {
-            if (accounts.length >= 1) {
-              tryToSetConnector(setConnector, setError)
-            } else {
-              setConnector('Network', { suppressAndThrowErrors: true }).catch(error => {
-                setError(error)
-              })
-            }
+          setConnector('Injected', { suppressAndThrowErrors: false }).catch(error => {
+            setError(error)
           })
         }
       } else {
-        setConnector('Network', { suppressAndThrowErrors: true }).catch(error => {
+        setConnector('Network', { suppressAndThrowErrors: false }).catch(error => {
           setError(error)
         })
       }
@@ -75,7 +67,7 @@ export default function Web3ReactManager({ children }) {
     if (error) {
       // if the user changes to the wrong network, unset the connector
       if (error.code === Connector.errorCodes.UNSUPPORTED_NETWORK) {
-        setConnector('Network', { suppressAndThrowErrors: true }).catch(error => {
+        setConnector('Network', { suppressAndThrowErrors: false }).catch(error => {
           setError(error)
         })
       }

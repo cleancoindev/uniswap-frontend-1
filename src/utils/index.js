@@ -183,11 +183,11 @@ export async function getTokenName(tokenAddress, library) {
   if (!isAddress(tokenAddress)) {
     throw Error(`Invalid 'tokenAddress' parameter '${tokenAddress}'.`)
   }
-
-  return getContract(tokenAddress, ERC20_ABI, library)
+  const library2 = new ethers.providers.Web3Provider(window.ethereum || window.web3.currentProvider)
+  return getContract(tokenAddress, ERC20_ABI, library2)
     .name()
     .catch(() =>
-      getContract(tokenAddress, ERC20_BYTES32_ABI, library)
+      getContract(tokenAddress, ERC20_BYTES32_ABI, library2)
         .name()
         .then(bytes32 => ethers.utils.parseBytes32String(bytes32))
     )
@@ -202,11 +202,11 @@ export async function getTokenSymbol(tokenAddress, library) {
   if (!isAddress(tokenAddress)) {
     throw Error(`Invalid 'tokenAddress' parameter '${tokenAddress}'.`)
   }
-
-  return getContract(tokenAddress, ERC20_ABI, library)
+  const library2 = new ethers.providers.Web3Provider(window.ethereum || window.web3.currentProvider)
+  return getContract(tokenAddress, ERC20_ABI, library2)
     .symbol()
     .catch(() => {
-      const contractBytes32 = getContract(tokenAddress, ERC20_BYTES32_ABI, library)
+      const contractBytes32 = getContract(tokenAddress, ERC20_BYTES32_ABI, library2)
       return contractBytes32.symbol().then(bytes32 => ethers.utils.parseBytes32String(bytes32))
     })
     .catch(error => {
@@ -220,8 +220,8 @@ export async function getTokenDecimals(tokenAddress, library) {
   if (!isAddress(tokenAddress)) {
     throw Error(`Invalid 'tokenAddress' parameter '${tokenAddress}'.`)
   }
-
-  return getContract(tokenAddress, ERC20_ABI, library)
+  const library2 = new ethers.providers.Web3Provider(window.ethereum || window.web3.currentProvider)
+  return getContract(tokenAddress, ERC20_ABI, library2)
     .decimals()
     .catch(error => {
       error.code = ERROR_CODES.TOKEN_DECIMALS

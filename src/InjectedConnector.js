@@ -1,4 +1,5 @@
 import { Connectors } from 'web3-react'
+import ArbProvider from 'arb-provider-web3'
 const { Connector, ErrorCodeMixin } = Connectors
 
 const InjectedConnectorErrorCodes = ['ETHEREUM_ACCESS_DENIED', 'NO_WEB3', 'UNLOCK_REQUIRED']
@@ -49,7 +50,7 @@ export default class InjectedConnector extends ErrorCodeMixin(Connector, Injecte
 
   async getProvider() {
     const { ethereum, web3 } = window
-    return ethereum || web3.currentProvider
+    return ArbProvider("http://localhost:1235", ethereum || web3.currentProvider)
   }
 
   async getAccount(provider) {

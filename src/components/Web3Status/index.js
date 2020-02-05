@@ -168,7 +168,7 @@ export default function Web3Status() {
           // if calling enable won't pop an approve modal, then try to activate injected...
           library.listAccounts().then(accounts => {
             if (accounts.length >= 1) {
-              setConnector('Injected', { suppressAndThrowErrors: true })
+              setConnector('Injected', { suppressAndThrowErrors: false })
                 .then(() => {
                   setError()
                 })
@@ -195,18 +195,7 @@ export default function Web3Status() {
     } else {
       // ...poll to check the accounts array, and if it's ever 0 i.e. the user logged out, update the connector
       if (ethereum) {
-        const accountPoll = setInterval(() => {
-          const library = new ethers.providers.Web3Provider(ethereum)
-          library.listAccounts().then(accounts => {
-            if (accounts.length === 0) {
-              setConnector('Network')
-            }
-          })
-        }, 750)
-
-        return () => {
-          clearInterval(accountPoll)
-        }
+        return () => {}
       }
     }
   }, [connectorName, setConnector])
@@ -215,7 +204,7 @@ export default function Web3Status() {
     if (walletModalError) {
       openWalletModal()
     } else if (connectorName === 'Network' && (window.ethereum || window.web3)) {
-      setConnector('Injected', { suppressAndThrowErrors: true }).catch(error => {
+      setConnector('Injected', { suppressAndThrowErrors: false }).catch(error => {
         if (error.code === Connector.errorCodes.UNSUPPORTED_NETWORK) {
           setError(error)
         }
