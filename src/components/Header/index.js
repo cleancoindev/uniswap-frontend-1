@@ -64,8 +64,16 @@ export default function Header() {
               </span>
             </Link>
           </Nod>
-          <Link id="link" href="https://uniswap.io">
-            <h1 id="title">Uniswap</h1>
+          <Link id="link" href="https://developer.offchainlabs.com">
+            <h1 id="title">Uniswap on Arbitrum</h1>
+          </Link>
+          &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+          <Link id="link" href="http://uniswap-demo.offchainlabs.com/tokenbridge">
+            <h1 id="title">Token Bridge</h1>
+          </Link>
+          &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+          <Link id="link" href="https://developer.offchainlabs.com">
+            <h1 id="title">Arbitrum Documentation</h1>
           </Link>
         </Title>
       </HeaderElement>
