@@ -50,7 +50,7 @@ export default class InjectedConnector extends ErrorCodeMixin(Connector, Injecte
 
   async getProvider() {
     const { ethereum, web3 } = window
-    return ArbProvider("http://142.93.188.32:1235", ethereum || web3.currentProvider)
+    return ArbProvider("http://64.225.27.132:1235", ethereum || web3.currentProvider)
   }
 
   async getAccount(provider) {
