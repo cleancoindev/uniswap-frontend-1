@@ -10,14 +10,20 @@ const HeaderFrame = styled.div`
   align-items: center;
   justify-content: space-between;
   width: 100%;
+
+  /* .links {
+    display: flex;
+  } */
+
+  /* ${({ theme }) => theme.mediaWidth.upToMedium`
+    .links {
+      display: block;
+    }
+  `} */
 `
 
 const HeaderElement = styled.div`
   margin: 1.25rem;
-  display: flex;
-  min-width: 0;
-  display: flex;
-  align-items: center;
 `
 
 const Nod = styled.span`
@@ -29,20 +35,18 @@ const Nod = styled.span`
   }
 `
 
-const Title = styled.div`
-  display: flex;
-  align-items: center;
-
-  :hover {
-    cursor: pointer;
+const Menu = styled.div`
+  .links {
+    display: flex;
   }
 
-  #link {
-    text-decoration-color: ${({ theme }) => theme.UniswapPink};
+  .link:hover {
+    cursor: pointer;
   }
 
   #title {
     display: inline;
+    margin: 0 1vw;
     font-size: 1rem;
     font-weight: 500;
     color: ${({ theme }) => theme.wisteriaPurple};
@@ -50,32 +54,75 @@ const Title = styled.div`
       color: ${({ theme }) => darken(0.1, theme.wisteriaPurple)};
     }
   }
+
+  input#menu-check,
+  label[for='menu-check'] {
+    display: none;
+  }
+
+  ${({ theme }) => theme.mediaWidth.upToMedium`
+    label[for=menu-check] {
+      display: initial;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .link {
+      display: block;
+      text-align: left;
+    }
+
+    .links {
+      display: block;
+      max-height: 0;
+      overflow: hidden;
+    }
+
+    input:checked ~ .links {
+      max-height: 100%;
+    }
+
+    .menu-toggle {
+      display: initial;
+    }
+
+  `}
+`
+
+const Divider = styled.span`
+  display: initial;
+
+  ${({ theme }) => theme.mediaWidth.upToMedium`
+    display: none;
+  `}
 `
 
 export default function Header() {
   return (
     <HeaderFrame>
       <HeaderElement>
-        <Title>
-          <Nod>
-            <Link id="link" href="https://uniswap.io">
-              <span role="img" aria-label="unicorn">
-                🦄{'  '}
-              </span>
+        <Menu>
+          <input type={'checkbox'} id={'menu-check'} />
+          <label for="menu-check" children={'TODO Menu Icon'} />
+          <div className={'links'}>
+            <Nod>
+              <Link className={'link'} href="https://uniswap.io">
+                <span role="img" aria-label="unicorn" children={'🦄'} />
+              </Link>
+            </Nod>
+            <Link className={'link'} href="https://developer.offchainlabs.com">
+              <h1 id="title">Uniswap on Arbitrum</h1>
             </Link>
-          </Nod>
-          <Link id="link" href="https://developer.offchainlabs.com">
-            <h1 id="title">Uniswap on Arbitrum</h1>
-          </Link>
-          &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
-          <Link id="link" href="http://uniswap-demo.offchainlabs.com/tokenbridge">
-            <h1 id="title">Token Bridge</h1>
-          </Link>
-          &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
-          <Link id="link" href="https://developer.offchainlabs.com">
-            <h1 id="title">Arbitrum Documentation</h1>
-          </Link>
-        </Title>
+            <Divider children={'|'} />
+            <Link className={'link'} href="http://uniswap-demo.offchainlabs.com/tokenbridge">
+              <h1 id="title">Token Bridge</h1>
+            </Link>
+            <Divider children={'|'} />
+            <Link className={'link'} href="https://developer.offchainlabs.com">
+              <h1 id="title">Arbitrum Documentation</h1>
+            </Link>
+          </div>
+        </Menu>
       </HeaderElement>
       <HeaderElement>
         <Web3Status />
