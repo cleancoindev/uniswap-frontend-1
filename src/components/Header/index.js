@@ -88,55 +88,55 @@ const MobileTitle = styled.div`
   `}
 `
 
-const menuStyles = {
-  bmBurgerButton: {
-    position: 'fixed',
-    width: '36px',
-    height: '30px',
-    left: '6vw',
-    top: '20px'
-  },
-  bmBurgerBars: {
-    background: '#36454f'
-  },
-  // bmBurgerBarsHover: {
-  //   background: '#a90000'
-  // },
-  // bmCrossButton: {
-  //   height: '24px',
-  //   width: '24px',
-  // },
-  // bmCross: {
-  //   background: '#bdc3c7'
-  // },
-  bmMenuWrap: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    height: '100%'
-  },
-  bmMenu: {
-    background: '#373a47',
-    padding: '2.5em 1.5em 0',
-    fontSize: '1.15em'
-  },
-  // bmMorphShape: {
-  //   fill: '#373a47'
-  // },
-  // bmItemList: {
-  //   color: '#b8b7ad',
-  //   padding: '0.8em'
-  // },
-  // bmItem: {
-  //   display: 'inline-block'
-  // },
-  bmOverlay: {
-    background: 'rgba(0, 0, 0, 0.3)',
-    position: 'absolute',
-    top: 0,
-    left: 0
+const MobileMenuStyles = styled.span`
+  .bm-burger-button {
+    position: fixed;
+    width: 36px;
+    height: 30px;
+    left: 6vw;
+    top: 20px;
   }
-}
+  .bm-burger-bars {
+    background: #36454f
+  }
+  .bm-burger-bars-hover {
+    background: #a90000
+  }
+  .bm-cross-button {
+    height: 24px;
+    width: 24px;
+  }
+  .bm-cross {
+    background: #bdc3c7
+  }
+  .bm-menu-wrap {
+    position: fixed;
+    top: 0;
+    left: 0;
+  }
+  .bm-menu {
+    background: #373a47;
+    padding: 2.5em 1.5em 0;
+    font-size: 1.15em;
+  }
+  .bm-morph-shape {
+    fill: #373a47;
+  }
+  .bm-item-list {
+    color: #b8b7ad;
+    padding: 0.8em;
+    height: auto !important;
+  }
+  .bm-item {
+    display: inline-block;
+  }
+  .bm-overlay {
+    background: rgba(0, 0, 0, 0.3);
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+`
 
 const noddingUnicorn = (
   <Nod className={'unicorn'}>
@@ -146,31 +146,38 @@ const noddingUnicorn = (
   </Nod>
 )
 
-const menuLinks = (
-  <>
-    {noddingUnicorn}
-    <Divider children={'|'} />
-    <Link className={'link'} href="https://developer.offchainlabs.com">
-      <h1 id="title">Uniswap on Arbitrum</h1>
-    </Link>
-    <Divider children={'|'} />
-    <Link className={'link'} href="http://uniswap-demo.offchainlabs.com/tokenbridge">
-      <h1 id="title">Token Bridge</h1>
-    </Link>
-    <Divider children={'|'} />
-    <Link className={'link'} href="https://developer.offchainlabs.com">
-      <h1 id="title">Arbitrum Documentation</h1>
-    </Link>
-  </>
-)
+const menuLinks = [
+  <Link className={'link'} href="https://developer.offchainlabs.com">
+    <h1 id="title">Uniswap on Arbitrum</h1>
+  </Link>,
+  <Link className={'link'} href="http://uniswap-demo.offchainlabs.com/tokenbridge">
+    <h1 id="title">Token Bridge</h1>
+  </Link>,
+  <Link className={'link'} href="https://developer.offchainlabs.com">
+    <h1 id="title">Arbitrum Documentation</h1>
+  </Link>
+]
 
 export default function Header() {
+
+  const mobileMenuLinks = menuLinks.map((el, idx) => <li key={idx}>{el}</li>)
+
+  const defaultMenuLinks = [noddingUnicorn, ...menuLinks].reduce((result, el, idx) => {
+    if (idx !== 0) {
+      result.push(<Divider key={idx - 0.5} children={'|'} />)
+    }
+    result.push({ ...el, key: idx })
+    return result
+  }, [])
+
   return (
     <HeaderFrame>
       <HeaderElement>
         <Title>
-          <MobileMenu styles={menuStyles} children={menuLinks} />
-          <DefaultMenu children={menuLinks} />
+          <MobileMenuStyles>
+            <MobileMenu isOpen children={mobileMenuLinks} />
+          </MobileMenuStyles>
+          <DefaultMenu children={defaultMenuLinks} />
         </Title>
       </HeaderElement>
       <HeaderElement>
