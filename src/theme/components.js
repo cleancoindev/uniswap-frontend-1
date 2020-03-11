@@ -47,6 +47,10 @@ export const Link = styled.a.attrs({
   :active {
     text-decoration: none;
   }
+
+  :hover {
+    cursor: pointer;
+  }
 `
 
 export const BorderlessInput = styled.input`
