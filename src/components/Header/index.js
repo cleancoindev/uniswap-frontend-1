@@ -97,26 +97,27 @@ const MobileMenuStyles = styled.span`
     top: 20px;
   }
   .bm-burger-bars {
-    background: #36454f
+    background: #36454f;
   }
   .bm-burger-bars-hover {
-    background: #a90000
+    background: #a90000;
   }
   .bm-cross-button {
     height: 24px;
     width: 24px;
   }
   .bm-cross {
-    background: #bdc3c7
+    background: #bdc3c7;
   }
   .bm-menu-wrap {
     position: fixed;
     top: 0;
     left: 0;
+    width: 35vw !important;
   }
   .bm-menu {
     background: #373a47;
-    padding: 2.5em 1.5em 0;
+    padding: 2.5em 1em 0;
     font-size: 1.15em;
   }
   .bm-morph-shape {
@@ -159,8 +160,11 @@ const menuLinks = [
 ]
 
 export default function Header() {
-
-  const mobileMenuLinks = menuLinks.map((el, idx) => <li key={idx}>{el}</li>)
+  const mobileMenuLinks = menuLinks.map((el, idx) => (
+    <ul>
+      <li key={idx}>{el}</li>
+    </ul>
+  ))
 
   const defaultMenuLinks = [noddingUnicorn, ...menuLinks].reduce((result, el, idx) => {
     if (idx !== 0) {
@@ -175,7 +179,7 @@ export default function Header() {
       <HeaderElement>
         <Title>
           <MobileMenuStyles>
-            <MobileMenu isOpen children={mobileMenuLinks} />
+            <MobileMenu children={mobileMenuLinks} />
           </MobileMenuStyles>
           <DefaultMenu children={defaultMenuLinks} />
         </Title>
