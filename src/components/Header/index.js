@@ -4,22 +4,13 @@ import styled from 'styled-components'
 import { Link } from '../../theme'
 import Web3Status from '../Web3Status'
 import { darken } from 'polished'
+import { slide as MobileMenu } from 'react-burger-menu'
 
 const HeaderFrame = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-
-  /* .links {
-    display: flex;
-  } */
-
-  /* ${({ theme }) => theme.mediaWidth.upToMedium`
-    .links {
-      display: block;
-    }
-  `} */
 `
 
 const HeaderElement = styled.div`
@@ -35,15 +26,7 @@ const Nod = styled.span`
   }
 `
 
-const Menu = styled.div`
-  .links {
-    display: flex;
-  }
-
-  .link:hover {
-    cursor: pointer;
-  }
-
+const Title = styled.div`
   #title {
     display: inline;
     margin: 0 1vw;
@@ -55,37 +38,35 @@ const Menu = styled.div`
     }
   }
 
-  input#menu-check,
-  label[for='menu-check'] {
+  /* CSS that follows accomodates mobile menu as necessary*/
+  .bm-burger-button {
     display: none;
   }
 
   ${({ theme }) => theme.mediaWidth.upToMedium`
-    label[for=menu-check] {
+    .bm-burger-button {
       display: initial;
-      cursor: pointer;
-      user-select: none;
     }
 
     .link {
       display: block;
-      text-align: left;
     }
 
-    .links {
-      display: block;
-      max-height: 0;
-      overflow: hidden;
+    .unicorn {
+      display: none;
     }
+  `}
+`
 
-    input:checked ~ .links {
-      max-height: 100%;
-    }
+const DefaultMenu = styled.div`
+  display: flex;
 
-    .menu-toggle {
-      display: initial;
-    }
+  .unicorn {
+    padding-right: 10px;
+  }
 
+  ${({ theme }) => theme.mediaWidth.upToMedium`
+    display: none;
   `}
 `
 
@@ -97,32 +78,103 @@ const Divider = styled.span`
   `}
 `
 
+const MobileTitle = styled.div`
+  display: none;
+
+  ${({ theme }) => theme.mediaWidth.upToMedium`
+    display: initial;
+    position: relative;
+    left: 300%; /* offset needed to center */
+  `}
+`
+
+const menuStyles = {
+  bmBurgerButton: {
+    position: 'fixed',
+    width: '36px',
+    height: '30px',
+    left: '6vw',
+    top: '20px'
+  },
+  bmBurgerBars: {
+    background: '#36454f'
+  },
+  // bmBurgerBarsHover: {
+  //   background: '#a90000'
+  // },
+  // bmCrossButton: {
+  //   height: '24px',
+  //   width: '24px',
+  // },
+  // bmCross: {
+  //   background: '#bdc3c7'
+  // },
+  bmMenuWrap: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    height: '100%'
+  },
+  bmMenu: {
+    background: '#373a47',
+    padding: '2.5em 1.5em 0',
+    fontSize: '1.15em'
+  },
+  // bmMorphShape: {
+  //   fill: '#373a47'
+  // },
+  // bmItemList: {
+  //   color: '#b8b7ad',
+  //   padding: '0.8em'
+  // },
+  // bmItem: {
+  //   display: 'inline-block'
+  // },
+  bmOverlay: {
+    background: 'rgba(0, 0, 0, 0.3)',
+    position: 'absolute',
+    top: 0,
+    left: 0
+  }
+}
+
+const noddingUnicorn = (
+  <Nod className={'unicorn'}>
+    <Link className={'link'} href="https://uniswap.io">
+      <span role="img" aria-label="unicorn" children={'🦄'} />
+    </Link>
+  </Nod>
+)
+
+const menuLinks = (
+  <>
+    {noddingUnicorn}
+    <Divider children={'|'} />
+    <Link className={'link'} href="https://developer.offchainlabs.com">
+      <h1 id="title">Uniswap on Arbitrum</h1>
+    </Link>
+    <Divider children={'|'} />
+    <Link className={'link'} href="http://uniswap-demo.offchainlabs.com/tokenbridge">
+      <h1 id="title">Token Bridge</h1>
+    </Link>
+    <Divider children={'|'} />
+    <Link className={'link'} href="https://developer.offchainlabs.com">
+      <h1 id="title">Arbitrum Documentation</h1>
+    </Link>
+  </>
+)
+
 export default function Header() {
   return (
     <HeaderFrame>
       <HeaderElement>
-        <Menu>
-          <input type={'checkbox'} id={'menu-check'} />
-          <label for="menu-check" children={'TODO Menu Icon'} />
-          <div className={'links'}>
-            <Nod>
-              <Link className={'link'} href="https://uniswap.io">
-                <span role="img" aria-label="unicorn" children={'🦄'} />
-              </Link>
-            </Nod>
-            <Link className={'link'} href="https://developer.offchainlabs.com">
-              <h1 id="title">Uniswap on Arbitrum</h1>
-            </Link>
-            <Divider children={'|'} />
-            <Link className={'link'} href="http://uniswap-demo.offchainlabs.com/tokenbridge">
-              <h1 id="title">Token Bridge</h1>
-            </Link>
-            <Divider children={'|'} />
-            <Link className={'link'} href="https://developer.offchainlabs.com">
-              <h1 id="title">Arbitrum Documentation</h1>
-            </Link>
-          </div>
-        </Menu>
+        <Title>
+          <MobileMenu styles={menuStyles} children={menuLinks} />
+          <DefaultMenu children={menuLinks} />
+        </Title>
+      </HeaderElement>
+      <HeaderElement>
+        <MobileTitle>{noddingUnicorn}</MobileTitle>
       </HeaderElement>
       <HeaderElement>
         <Web3Status />
