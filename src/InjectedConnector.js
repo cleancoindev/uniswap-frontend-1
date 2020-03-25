@@ -50,7 +50,11 @@ export default class InjectedConnector extends ErrorCodeMixin(Connector, Injecte
 
   async getProvider() {
     const { ethereum, web3 } = window
-    return ArbProvider("http://64.225.27.132:1235", ethereum || web3.currentProvider)
+    const arbUrl = process.env.REACT_APP_ARB_VALIDATOR_URL
+    if (!arbUrl) {
+      throw new Error('No arbitrum validator URL set via .env.local')
+    }
+    return ArbProvider(arbUrl, ethereum || web3.currentProvider)
   }
 
   async getAccount(provider) {
