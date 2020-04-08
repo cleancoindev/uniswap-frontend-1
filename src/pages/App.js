@@ -12,6 +12,7 @@ import { isAddress, getAllQueryParams } from '../utils'
 const Swap = lazy(() => import('./Swap'))
 const Send = lazy(() => import('./Send'))
 const Pool = lazy(() => import('./Pool'))
+const Bridge = lazy(() => import('./Bridge'))
 
 const AppWrapper = styled.div`
   display: flex;
@@ -105,6 +106,7 @@ export default function App() {
                         ]}
                         component={() => <Pool params={params} />}
                       />
+                      <Route exact path="/bridge" component={() => <Bridge />} />
                       <Redirect to="/swap" />
                     </Switch>
                   </Suspense>
