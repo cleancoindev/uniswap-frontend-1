@@ -191,7 +191,7 @@ function getExchangeRate(inputValue, inputDecimals, outputValue, outputDecimals,
           .div(ethers.utils.bigNumberify(10).pow(ethers.utils.bigNumberify(outputDecimals)))
       }
     }
-  } catch {}
+  } catch { }
 }
 
 function getMarketRate(reserveETH, reserveToken, decimals, invert = false) {
@@ -256,21 +256,21 @@ export default function AddLiquidity({ params }) {
   const ethShare =
     exchangeETHBalance && poolTokenPercentage
       ? exchangeETHBalance
-          .mul(poolTokenPercentage)
-          .div(ethers.utils.bigNumberify(10).pow(ethers.utils.bigNumberify(18)))
+        .mul(poolTokenPercentage)
+        .div(ethers.utils.bigNumberify(10).pow(ethers.utils.bigNumberify(18)))
       : undefined
   const tokenShare =
     exchangeTokenBalance && poolTokenPercentage
       ? exchangeTokenBalance
-          .mul(poolTokenPercentage)
-          .div(ethers.utils.bigNumberify(10).pow(ethers.utils.bigNumberify(18)))
+        .mul(poolTokenPercentage)
+        .div(ethers.utils.bigNumberify(10).pow(ethers.utils.bigNumberify(18)))
       : undefined
 
   const liquidityMinted = isNewExchange
     ? inputValueParsed
     : totalPoolTokens && inputValueParsed && exchangeETHBalance && !exchangeETHBalance.isZero()
-    ? totalPoolTokens.mul(inputValueParsed).div(exchangeETHBalance)
-    : undefined
+      ? totalPoolTokens.mul(inputValueParsed).div(exchangeETHBalance)
+      : undefined
 
   // user balances
   const inputBalance = useAddressBalance(account, inputCurrency)
@@ -636,10 +636,10 @@ export default function AddLiquidity({ params }) {
             <span>
               {exchangeETHBalance && exchangeTokenBalance
                 ? `${amountFormatter(exchangeETHBalance, 18, 4)} ETH + ${amountFormatter(
-                    exchangeTokenBalance,
-                    decimals,
-                    Math.min(4, decimals)
-                  )} ${symbol}`
+                  exchangeTokenBalance,
+                  decimals,
+                  Math.min(4, decimals)
+                )} ${symbol}`
                 : ' - '}
             </span>
           </ExchangeRateWrapper>
@@ -650,10 +650,10 @@ export default function AddLiquidity({ params }) {
             <span>
               {ethShare && tokenShare
                 ? `${amountFormatter(ethShare, 18, 4)} ETH + ${amountFormatter(
-                    tokenShare,
-                    decimals,
-                    Math.min(4, decimals)
-                  )} ${symbol}`
+                  tokenShare,
+                  decimals,
+                  Math.min(4, decimals)
+                )} ${symbol}`
                 : ' - '}
             </span>
           </ExchangeRateWrapper>

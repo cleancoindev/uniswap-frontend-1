@@ -539,15 +539,15 @@ export function useAllTokenDetails(requireExchange = true) {
 
   return requireExchange
     ? Object.keys(tokenDetails)
-        .filter(
-          tokenAddress =>
-            tokenAddress === 'ETH' ||
-            (safeAccess(tokenDetails, [tokenAddress, EXCHANGE_ADDRESS]) &&
-              safeAccess(tokenDetails, [tokenAddress, EXCHANGE_ADDRESS]) !== ethers.constants.AddressZero)
-        )
-        .reduce((accumulator, tokenAddress) => {
-          accumulator[tokenAddress] = tokenDetails[tokenAddress]
-          return accumulator
-        }, {})
+      .filter(
+        tokenAddress =>
+          tokenAddress === 'ETH' ||
+          (safeAccess(tokenDetails, [tokenAddress, EXCHANGE_ADDRESS]) &&
+            safeAccess(tokenDetails, [tokenAddress, EXCHANGE_ADDRESS]) !== ethers.constants.AddressZero)
+      )
+      .reduce((accumulator, tokenAddress) => {
+        accumulator[tokenAddress] = tokenDetails[tokenAddress]
+        return accumulator
+      }, {})
     : tokenDetails
 }
