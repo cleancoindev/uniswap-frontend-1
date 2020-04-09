@@ -268,20 +268,21 @@ const SpinnerWrapper = styled(Spinner)`
 `
 
 export default function CurrencyInputPanel({
-  onValueChange = () => {},
+  onValueChange = () => { },
   allBalances,
   renderInput,
-  onCurrencySelected = () => {},
+  onCurrencySelected = () => { },
   title,
   description,
   extraText,
-  extraTextClickHander = () => {},
+  extraTextClickHander = () => { },
   errorMessage,
   disableUnlock,
   disableTokenSelect,
   selectedTokenAddress = '',
   showUnlock,
-  value
+  value,
+  modalPropOverrides = {}
 }) {
   const { t } = useTranslation()
 
@@ -415,19 +416,26 @@ export default function CurrencyInputPanel({
           }}
           onTokenSelect={onCurrencySelected}
           allBalances={allBalances}
+          {...modalPropOverrides}
         />
       )}
     </InputPanel>
   )
 }
 
-function CurrencySelectModal({ isOpen, onDismiss, onTokenSelect, allBalances }) {
+function CurrencySelectModal({
+  isOpen,
+  onDismiss,
+  onTokenSelect,
+  allBalances,
+  allTokens = {}
+}) {
   const { t } = useTranslation()
 
   const [searchQuery, setSearchQuery] = useState('')
   const { exchangeAddress } = useTokenDetails(searchQuery)
 
-  const allTokens = useAllTokenDetails()
+  allTokens = { ...useAllTokenDetails(), ...allTokens }
 
   const { account } = useWeb3Context()
 
@@ -559,8 +567,8 @@ function CurrencySelectModal({ isOpen, onDismiss, onTokenSelect, allBalances }) 
             ) : account ? (
               <SpinnerWrapper src={Circle} alt="loader" />
             ) : (
-              '-'
-            )}
+                  '-'
+                )}
             <TokenRowUsd>
               {usdBalance ? (usdBalance.lt(0.01) ? '<$0.01' : '$' + formatToUsd(usdBalance)) : ''}
             </TokenRowUsd>

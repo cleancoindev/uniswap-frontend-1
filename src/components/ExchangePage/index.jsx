@@ -39,14 +39,14 @@ const DEADLINE_FROM_NOW = 60 * 15
 // % above the calculated gas cost that we actually send, denominated in bips
 const GAS_MARGIN = ethers.utils.bigNumberify(1000)
 
-const DownArrowBackground = styled.div`
+export const DownArrowBackground = styled.div`
   ${({ theme }) => theme.flexRowNoWrap}
   justify-content: center;
   align-items: center;
 `
 
 const WrappedArrowDown = ({ clickable, active, ...rest }) => <ArrowDown {...rest} />
-const DownArrow = styled(WrappedArrowDown)`
+export const DownArrow = styled(WrappedArrowDown)`
   color: ${({ theme, active }) => (active ? theme.royalBlue : theme.chaliceGray)};
   width: 0.625rem;
   height: 0.625rem;
@@ -133,8 +133,8 @@ function getInitialSwapState(state) {
           : ''
         : state.outputCurrencyURL
       : state.initialCurrency
-      ? state.initialCurrency
-      : ''
+        ? state.initialCurrency
+        : ''
   }
 }
 
@@ -217,7 +217,7 @@ function getExchangeRate(inputValue, inputDecimals, outputValue, outputDecimals,
           .div(ethers.utils.bigNumberify(10).pow(ethers.utils.bigNumberify(outputDecimals)))
       }
     }
-  } catch {}
+  } catch { }
 }
 
 function getMarketRate(
@@ -240,7 +240,7 @@ function getMarketRate(
     const secondRate = getExchangeRate(outputReserveETH, 18, outputReserveToken, outputDecimals)
     try {
       return !!(firstRate && secondRate) ? firstRate.mul(secondRate).div(factor) : undefined
-    } catch {}
+    } catch { }
   }
 }
 
@@ -526,11 +526,11 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
   const percentSlippage =
     exchangeRate && marketRate
       ? exchangeRate
-          .sub(marketRate)
-          .abs()
-          .mul(ethers.utils.bigNumberify(10).pow(ethers.utils.bigNumberify(18)))
-          .div(marketRate)
-          .sub(ethers.utils.bigNumberify(3).mul(ethers.utils.bigNumberify(10).pow(ethers.utils.bigNumberify(15))))
+        .sub(marketRate)
+        .abs()
+        .mul(ethers.utils.bigNumberify(10).pow(ethers.utils.bigNumberify(18)))
+        .div(marketRate)
+        .sub(ethers.utils.bigNumberify(3).mul(ethers.utils.bigNumberify(10).pow(ethers.utils.bigNumberify(15))))
       : undefined
   const percentSlippageFormatted = percentSlippage && amountFormatter(percentSlippage, 16, 2)
   const slippageWarning =
@@ -575,13 +575,13 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
         method = sending ? contract.tokenToTokenTransferInput : contract.tokenToTokenSwapInput
         args = sending
           ? [
-              independentValueParsed,
-              dependentValueMinumum,
-              ethers.constants.One,
-              deadline,
-              recipient.address,
-              outputCurrency
-            ]
+            independentValueParsed,
+            dependentValueMinumum,
+            ethers.constants.One,
+            deadline,
+            recipient.address,
+            outputCurrency
+          ]
           : [independentValueParsed, dependentValueMinumum, ethers.constants.One, deadline, outputCurrency]
         value = ethers.constants.Zero
       }
@@ -608,13 +608,13 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
         method = sending ? contract.tokenToTokenTransferOutput : contract.tokenToTokenSwapOutput
         args = sending
           ? [
-              independentValueParsed,
-              dependentValueMaximum,
-              ethers.constants.MaxUint256,
-              deadline,
-              recipient.address,
-              outputCurrency
-            ]
+            independentValueParsed,
+            dependentValueMaximum,
+            ethers.constants.MaxUint256,
+            deadline,
+            recipient.address,
+            outputCurrency
+          ]
           : [independentValueParsed, dependentValueMaximum, ethers.constants.MaxUint256, deadline, outputCurrency]
         value = ethers.constants.Zero
       }
@@ -699,8 +699,8 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
           <AddressInputPanel onChange={setRecipient} onError={setRecipientError} initialInput={recipient} />
         </>
       ) : (
-        ''
-      )}
+          ''
+        )}
       <OversizedPanel hideBottom>
         <ExchangeRateWrapper
           onClick={() => {
@@ -715,12 +715,12 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
                 : ' - '}
             </span>
           ) : (
-            <span>
-              {exchangeRate
-                ? `1 ${outputSymbol} = ${amountFormatter(exchangeRateInverted, 18, 6, false)} ${inputSymbol}`
-                : ' - '}
-            </span>
-          )}
+              <span>
+                {exchangeRate
+                  ? `1 ${outputSymbol} = ${amountFormatter(exchangeRateInverted, 18, 6, false)} ${inputSymbol}`
+                  : ' - '}
+              </span>
+            )}
         </ExchangeRateWrapper>
       </OversizedPanel>
       <TransactionDetails
@@ -762,8 +762,8 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
               ? t('sendAnyway')
               : t('send')
             : highSlippageWarning || customSlippageError === 'warning'
-            ? t('swapAnyway')
-            : t('swap')}
+              ? t('swapAnyway')
+              : t('swap')}
         </Button>
       </Flex>
     </>
