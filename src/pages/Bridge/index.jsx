@@ -26,8 +26,6 @@ const ButtonContainer = styled.div`
   }
 `
 
-//../../utils amountFormatter may come in handy
-
 // default view in the bridge should be the two eth balances on either side
 // there should be some sort of explanation of how to view tutorials
 
@@ -60,46 +58,96 @@ const ButtonContainer = styled.div`
 // }}
 
 // TODO symbol image search overrides
+
+const ETH_TOKEN = 'ETH'
+const ARB_ETH_TOKEN = 'AETH'
+
 export default function Bridge({ params = defaultBridgeParams }) {
-  const [transferValue, setTransferValue] = useState(0)
-  const [selectedInput, setInput] = useState('ETH')
-  const [selectedOutput, setOutput] = useState('')
+  const [transferValue, setTransferValue] = useState('0')
+  const [selectedInput, setInput] = useState(ETH_TOKEN)
+  const [selectedOutput, setOutput] = useState(ARB_ETH_TOKEN)
 
   const { connector, connectorName, library } = useWeb3Context()
   const { t: translated } = useTranslation()
   console.log(connectorName)
-  const { balances } = useArbTokenBridge(
+  const { balances, bridgedTokens, ...bridge } = useArbTokenBridge(
     process.env.REACT_APP_ARB_VALIDATOR_URL,
     // new ethers.providers.Web3Provider(library.provider),
     new ethers.providers.Web3Provider(window.ethereum),
     0
   )
-  const testBals = {
-    'ETH': {
+
+  const combinedEthDetails = {
+    [ETH_TOKEN]: {
+      name: 'Ethereum',
+      symbol: ETH_TOKEN,
+      decimals: 18,
+      exchangeAddress: null,
       balance: balances.eth.balance,
       ethRate: ethers.constants.One
-    },
-    '0x0000000000000000000000000000000000000065': {
-      balance: ethers.utils.bigNumberify(99999),
-      ethRate: ethers.constants.One,
-    },
-    '0xD02bEC7Ee5Ee73A271B144E829EeD1C19218D813': {
-      balance: ethers.utils.bigNumberify(99999),
-      ethRate: ethers.constants.One,
     }
   }
 
-  const allTokens = {
-    '0x0000000000000000000000000000000000000065': {
-      name: 'Arbitrum ETH',
-      symbol: 'ETH',
+  const combinedArbDetails = {
+    [ETH_TOKEN]: {
+      name: `Ethereum @ Arbitrum Rollup ${bridge.vmId ?? '0x'}`,
+      symbol: ETH_TOKEN,
       decimals: 18,
       exchangeAddress: null,
+      balance: balances.eth.arbChainBalance,
+      ethRate: ethers.constants.One,
     },
-    '0xD02bEC7Ee5Ee73A271B144E829EeD1C19218D813': {
-      name: 'test',
-      symbol: 'TST',
-      decimals: 18,
+  }
+
+  // TODO how to handle arb vs eth contracts due to same address?
+  const transferType = {
+    toArb: 1,
+    fromArb: 2,
+    fromLockbox: 3
+  }
+  // each should set input / output as needed
+
+  // eth - balance transfer + lockbox withdraw
+  // erc20 - user add + select contract, balance transfer + lockbox withdraw
+  // erc721 - user add + select contract, list tokens, transfer token ids, lockbox
+
+  for (const addr in balances.erc20) {
+    const token = bridgedTokens[addr]
+    combinedEthDetails[addr] = {
+      name: token.name,
+      symbol: token.symbol,
+      decimals: token.units,
+      balance: balances.erc20[addr].balance,
+      ethRate: ethers.constants.One,
+      exchangeAddress: null,
+    }
+    combinedArbDetails[addr] = {
+      name: token.name,
+      symbol: token.symbol,
+      decimals: token.units,
+      balance: balances.erc20[addr].balance,
+      ethRate: ethers.constants.One,
+      exchangeAddress: null,
+    }
+  }
+
+  // TODO how to display NFTs? token ids? number of tokens?
+  for (const addr in balances.erc721) {
+    const token = bridgedTokens[addr]
+    combinedEthDetails[addr] = {
+      name: token.name,
+      symbol: token.symbol,
+      decimals: 0,
+      balance: balances.erc721[addr].tokens.length,
+      ethRate: ethers.constants.One,
+      exchangeAddress: null,
+    }
+    combinedArbDetails[addr] = {
+      name: token.name,
+      symbol: token.symbol,
+      decimals: token.units,
+      balance: balances.erc20[addr].balance,
+      ethRate: ethers.constants.One,
       exchangeAddress: null,
     }
   }
@@ -108,30 +156,28 @@ export default function Bridge({ params = defaultBridgeParams }) {
 
   })
 
-  console.log('test bal', testBals['ETH'].balance)
+  const handleClick = () => {
+    // bridge.eth.deposit(transferValue).then((...args) => console.log('deposit complete', args)).catch(console.error)
+    bridge.eth.withdraw(transferValue).then((...args) => console.log('deposit complete', args)).catch(console.error)
+  }
 
+  console.log('test bal', balances)
+
+  // use existing unlock button in currency input panel to approve tokens
+  // use transfer states to decide tokens
   return (
     <>
       <CurrencyInputPanel
         title={translated('input')}
-        allBalances={testBals}
-        extraText={'Balance: ' + amountFormatter(testBals['ETH'].balance, 18, 4)}
-        // description={"poop"}
+        description={"input description"}
+        allBalances={combinedEthDetails}
+        allTokens={combinedEthDetails}
         onValueChange={setTransferValue}
-        extraTextClickHander={() => {
-          // if (inputBalance) {
-          //   const valueToSet = inputBalance.sub(ethers.utils.parseEther('.1'))
-          //   if (valueToSet.gt(ethers.constants.Zero)) {
-          //     dispatchAddLiquidityState({
-          //       type: 'UPDATE_VALUE',
-          //       payload: { value: amountFormatter(valueToSet, 18, 18, false), field: INPUT }
-          //     })
-          //   }
-          // }
-        }}
+        extraText={'Balance: ' + amountFormatter(combinedEthDetails[selectedInput].balance, 18, 4)}
+        extraTextClickHander={() => balances.update()}
         selectedTokenAddress={selectedInput}
         value={transferValue}
-        modalPropOverrides={{ allTokens }}
+        disableTokenSelect
       // errorMessage={inputError}
       />
 
@@ -143,31 +189,23 @@ export default function Bridge({ params = defaultBridgeParams }) {
       </OversizedPanel>
 
       <CurrencyInputPanel
-        allBalances={testBals}
         title={translated('output')}
-        extraText={'Balance: ' + amountFormatter(testBals['ETH'].balance, 18, 4)}
-        // onValueChange={}
-        extraTextClickHander={() => {
-          // if (inputBalance) {
-          //   const valueToSet = inputBalance.sub(ethers.utils.parseEther('.1'))
-          //   if (valueToSet.gt(ethers.constants.Zero)) {
-          //     dispatchAddLiquidityState({
-          //       type: 'UPDATE_VALUE',
-          //       payload: { value: amountFormatter(valueToSet, 18, 18, false), field: INPUT }
-          //     })
-          //   }
-          // }
-        }}
+        description={'output description'}
+        allBalances={combinedArbDetails}
+        allTokens={combinedArbDetails}
+        // onValueChange={} // should always be the same as input
+        extraText={'Balance: ' + amountFormatter(combinedArbDetails[selectedOutput].balance, 18, 4)}
+        extraTextClickHander={() => balances.update()}
         selectedTokenAddress={selectedOutput}
         value={transferValue}
-        modalPropOverrides={{ allTokens }}
+        disableTokenSelect
       // errorMessage={inputError}
       />
 
       <ButtonContainer>
         <Button
-        // disabled={!isValid || customSlippageError === 'invalid'}
-        // onClick={onSwap}
+          // disabled={!isValid || customSlippageError === 'invalid'}
+          onClick={handleClick}
         // warning={highSlippageWarning || customSlippageError === 'warning'}
         >
           {/* text should provide destination context */}

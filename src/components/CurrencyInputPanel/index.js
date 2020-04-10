@@ -282,7 +282,7 @@ export default function CurrencyInputPanel({
   selectedTokenAddress = '',
   showUnlock,
   value,
-  modalPropOverrides = {}
+  allTokens
 }) {
   const { t } = useTranslation()
 
@@ -295,7 +295,7 @@ export default function CurrencyInputPanel({
 
   const addTransaction = useTransactionAdder()
 
-  const allTokens = useAllTokenDetails()
+  allTokens = { ...useAllTokenDetails(), ...allTokens }
 
   function renderUnlockButton() {
     if (disableUnlock || !showUnlock || selectedTokenAddress === 'ETH' || !selectedTokenAddress) {
@@ -416,7 +416,7 @@ export default function CurrencyInputPanel({
           }}
           onTokenSelect={onCurrencySelected}
           allBalances={allBalances}
-          {...modalPropOverrides}
+          allTokens={allTokens}
         />
       )}
     </InputPanel>
