@@ -84,7 +84,7 @@ const PoolModal = styled.div`
 `
 
 const WrappedDropdown = ({ isError, highSlippageWarning, ...rest }) => <Dropdown {...rest} />
-const ColoredDropdown = styled(WrappedDropdown)`
+export const ColoredDropdown = styled(WrappedDropdown)`
   path {
     stroke: ${({ theme }) => theme.royalBlue};
   }

@@ -2,19 +2,73 @@ import React, { useState, useEffect } from 'react'
 import { useWeb3Context } from 'web3-react'
 import styled from 'styled-components'
 import { useTranslation } from 'react-i18next'
-import { useArbTokenBridge } from 'arb-token-bridge/dist/hooks/useArbTokenBridge'
-import { ethers, utils } from 'ethers'
+import { useArbTokenBridge, TokenType } from 'arb-token-bridge/dist/hooks/useArbTokenBridge'
+import { ethers } from 'ethers'
+import { lighten } from 'polished'
 
 import { Button } from '../../theme'
 import CurrencyInputPanel from '../../components/CurrencyInputPanel'
 import OversizedPanel from '../../components/OversizedPanel'
+import Modal from '../../components/Modal'
 import { DownArrow, DownArrowBackground } from '../../components/ExchangePage'
 import { amountFormatter } from '../../utils'
+import { ColoredDropdown } from '../Pool/ModeSelector'
 
 
 const defaultBridgeParams = {
 
 }
+
+const TransferTypeSelection = styled.div`
+  ${({ theme }) => theme.flexRowNoWrap};
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1rem;
+  font-size: 1rem;
+  color: ${({ theme }) => theme.royalBlue};
+  font-weight: 500;
+  cursor: pointer;
+
+  :hover {
+    color: ${({ theme }) => lighten(0.1, theme.royalBlue)};
+  }
+
+  img {
+    height: 0.75rem;
+    width: 0.75rem;
+  }
+`
+
+const TransferTypeModal = styled.div`
+  background-color: ${({ theme }) => theme.inputBackground};
+  width: 100%;
+  height: 100%;
+  padding: 2rem 0 2rem 0;
+`
+
+const ModalOption = styled.div`
+  ${({ theme }) => theme.flexRowNoWrap}
+  padding: 1rem;
+  margin-left: 1rem;
+  margin-right: 1rem;
+  font-size: 1rem;
+  cursor: pointer;
+  text-decoration: none;
+  color: ${({ theme }) => theme.doveGray};
+  font-size: 1rem;
+
+  &.active {
+    background-color: ${({ theme }) => theme.inputBackground};
+    border-radius: 3rem;
+    border: 1px solid ${({ theme }) => theme.mercuryGray};
+    font-weight: 500;
+    color: ${({ theme }) => theme.royalBlue};
+  }
+
+  &:hover {
+    color: ${({ theme }) => lighten(0.1, theme.royalBlue)};
+  }
+`
 
 const ButtonContainer = styled.div`
   display: flex;
@@ -26,56 +80,44 @@ const ButtonContainer = styled.div`
   }
 `
 
-// default view in the bridge should be the two eth balances on either side
 // there should be some sort of explanation of how to view tutorials
-
 // to add a token, we can have an option in the token select area. but will that
 // be clear enough?
 
-// what won't fit into the existing flow is withdrawing lockbox
-// and displaying lockbox amount. also need to explain what it is
-
-// allBalances should be a mapping of
-// {[addressOrEth: string]: {balance: BigNumber, ethRate: BigNumber}}
-
-// internally, CurrencyInputPanel's modal consumes the balance data along
-// with an internally fetched token list via useAllTokenDetails with interface
-// {[addressOrEth: string]: {
-//   decimals: number,
-//   exchangeAddress: string || null,
-//   name: string
-//   symbol: string
-// }}
-
-// it maps the balances to tokens
-// that exist in its internal list, mapping the data to the format below
-// {[addressOrEth: string]: {
-//    name: string
-//    symbol: string
-//    address: string
-//    balance: BigNumber
-//    usdBalance: BigNumber
-// }}
-
-// TODO symbol image search overrides
+// TODO symbol image search overrides for each symbol if possible
+// TODO create exchange when adding token?
+const TransferType = {
+  toArb: 1,
+  fromArb: 2,
+}
 
 const ETH_TOKEN = 'ETH'
-const ARB_ETH_TOKEN = 'AETH'
 
+// TODO handle contract not existing in arbitrum - here or in hook?
+// TODO always display lockbox balances + explain
+// TODO display full rollup address somewhere
 export default function Bridge({ params = defaultBridgeParams }) {
-  const [transferValue, setTransferValue] = useState('0')
-  const [selectedInput, setInput] = useState(ETH_TOKEN)
-  const [selectedOutput, setOutput] = useState(ARB_ETH_TOKEN)
+  const [transferType, setTransferType] = useState(TransferType.toArb)
+  const [transferValue, setTransferValue] = useState()
+  const [selectedToken, setToken] = useState(ETH_TOKEN)
+  const [modalOpen, setModalOpen] = useState(false)
 
-  const { connector, connectorName, library } = useWeb3Context()
+  // const { connector, connectorName, library } = useWeb3Context()
   const { t: translated } = useTranslation()
-  console.log(connectorName)
-  const { balances, bridgedTokens, ...bridge } = useArbTokenBridge(
+  const { balances, bridgeTokens, ...bridge } = useArbTokenBridge(
     process.env.REACT_APP_ARB_VALIDATOR_URL,
     // new ethers.providers.Web3Provider(library.provider),
     new ethers.providers.Web3Provider(window.ethereum),
-    0
+    0,
+    true
   )
+
+  const vmIdParsed = bridge.vmId.slice(0, 20) || '0x'
+
+  const transferTypeNames = {
+    [TransferType.toArb]: `Ethereum -> Arbitrum Rollup @ ${vmIdParsed}...`,
+    [TransferType.fromArb]: ` Arbitrum ${vmIdParsed}... -> Ethereum`
+  }
 
   const combinedEthDetails = {
     [ETH_TOKEN]: {
@@ -90,29 +132,14 @@ export default function Bridge({ params = defaultBridgeParams }) {
 
   const combinedArbDetails = {
     [ETH_TOKEN]: {
-      name: `Ethereum @ Arbitrum Rollup ${bridge.vmId ?? '0x'}`,
-      symbol: ETH_TOKEN,
-      decimals: 18,
-      exchangeAddress: null,
-      balance: balances.eth.arbChainBalance,
-      ethRate: ethers.constants.One,
+      ...combinedEthDetails[ETH_TOKEN],
+      name: `Ethereum @ Arbitrum Rollup ${vmIdParsed}`,
+      balance: balances.eth.arbChainBalance
     },
   }
 
-  // TODO how to handle arb vs eth contracts due to same address?
-  const transferType = {
-    toArb: 1,
-    fromArb: 2,
-    fromLockbox: 3
-  }
-  // each should set input / output as needed
-
-  // eth - balance transfer + lockbox withdraw
-  // erc20 - user add + select contract, balance transfer + lockbox withdraw
-  // erc721 - user add + select contract, list tokens, transfer token ids, lockbox
-
   for (const addr in balances.erc20) {
-    const token = bridgedTokens[addr]
+    const token = bridgeTokens[addr]
     combinedEthDetails[addr] = {
       name: token.name,
       symbol: token.symbol,
@@ -122,63 +149,71 @@ export default function Bridge({ params = defaultBridgeParams }) {
       exchangeAddress: null,
     }
     combinedArbDetails[addr] = {
-      name: token.name,
-      symbol: token.symbol,
-      decimals: token.units,
-      balance: balances.erc20[addr].balance,
-      ethRate: ethers.constants.One,
-      exchangeAddress: null,
+      ...combinedEthDetails[addr],
+      balance: balances.erc20[addr].arbChainBalance,
     }
   }
 
-  // TODO how to display NFTs? token ids? number of tokens?
-  for (const addr in balances.erc721) {
-    const token = bridgedTokens[addr]
-    combinedEthDetails[addr] = {
-      name: token.name,
-      symbol: token.symbol,
-      decimals: 0,
-      balance: balances.erc721[addr].tokens.length,
-      ethRate: ethers.constants.One,
-      exchangeAddress: null,
+  // 0x8205bd0BcF13F90d25721CDD6643D7e8b557a3f5
+  const handleSelectToken = (address) => {
+    let maybePromise
+    if (!bridgeTokens[address]) {
+      console.log('adding token')
+      maybePromise = bridge.token.add(address, TokenType.ERC20)
     }
-    combinedArbDetails[addr] = {
-      name: token.name,
-      symbol: token.symbol,
-      decimals: token.units,
-      balance: balances.erc20[addr].balance,
-      ethRate: ethers.constants.One,
-      exchangeAddress: null,
-    }
+
+    return Promise.resolve(maybePromise).then(() => setToken(address))
   }
 
-  useEffect(() => {
-
-  })
-
-  const handleClick = () => {
-    // bridge.eth.deposit(transferValue).then((...args) => console.log('deposit complete', args)).catch(console.error)
-    bridge.eth.withdraw(transferValue).then((...args) => console.log('deposit complete', args)).catch(console.error)
+  const handleButtonClick = () => {
+    bridge.eth.deposit(transferValue).then((...args) => console.log('deposit complete', args)).catch(console.error)
+    // bridge.eth.withdraw(transferValue).then((...args) => console.log('deposit complete', args)).catch(console.error)
   }
-
-  console.log('test bal', balances)
 
   // use existing unlock button in currency input panel to approve tokens
   // use transfer states to decide tokens
+  const inputPanelProps = {
+    extraTextClickHander: () => balances.update(),
+    selectedTokenAddress: selectedToken,
+    selectModalProps: { enableCreateExchange: true },
+    onCurrencySelected: handleSelectToken,
+  }
   return (
     <>
+      <OversizedPanel hideTop>
+        <TransferTypeSelection onClick={() => setModalOpen(true)}>
+          {transferTypeNames[transferType]}
+          <ColoredDropdown alt={'arrow down'} />
+        </TransferTypeSelection>
+        <Modal isOpen={modalOpen} onDismiss={() => { setModalOpen(false) }}>
+          <TransferTypeModal>
+            {[TransferType.toArb, TransferType.fromArb].map(ttype => (
+              <ModalOption
+                key={ttype}
+                onClick={(...args) => {
+                  console.log('select modal args', args)
+                  setTransferType(ttype)
+                  setModalOpen(false)
+                }}
+                className={ttype === transferType ? 'active' : undefined}
+              >
+                {translated(transferTypeNames[ttype])}
+              </ModalOption>
+            ))}
+          </TransferTypeModal>
+        </Modal>
+      </OversizedPanel>
+
       <CurrencyInputPanel
         title={translated('input')}
-        description={"input description"}
         allBalances={combinedEthDetails}
         allTokens={combinedEthDetails}
+        extraText={'Balance: ' + amountFormatter(combinedEthDetails[selectedToken].balance, 18, 4)}
         onValueChange={setTransferValue}
-        extraText={'Balance: ' + amountFormatter(combinedEthDetails[selectedInput].balance, 18, 4)}
-        extraTextClickHander={() => balances.update()}
-        selectedTokenAddress={selectedInput}
-        value={transferValue}
-        disableTokenSelect
+        {...inputPanelProps}
+      // description={"Ethereum balance"}
       // errorMessage={inputError}
+      // disableTokenSelect // maybe cleaner to have own input for adding tokens
       />
 
       <OversizedPanel>
@@ -190,22 +225,20 @@ export default function Bridge({ params = defaultBridgeParams }) {
 
       <CurrencyInputPanel
         title={translated('output')}
-        description={'output description'}
         allBalances={combinedArbDetails}
         allTokens={combinedArbDetails}
-        // onValueChange={} // should always be the same as input
-        extraText={'Balance: ' + amountFormatter(combinedArbDetails[selectedOutput].balance, 18, 4)}
-        extraTextClickHander={() => balances.update()}
-        selectedTokenAddress={selectedOutput}
+        extraText={'Balance: ' + amountFormatter(combinedArbDetails[selectedToken].balance, 18, 4)}
         value={transferValue}
         disableTokenSelect
+        {...inputPanelProps}
+      // description={'output description'}
       // errorMessage={inputError}
       />
 
       <ButtonContainer>
         <Button
           // disabled={!isValid || customSlippageError === 'invalid'}
-          onClick={handleClick}
+          onClick={handleButtonClick}
         // warning={highSlippageWarning || customSlippageError === 'warning'}
         >
           {/* text should provide destination context */}

@@ -282,7 +282,8 @@ export default function CurrencyInputPanel({
   selectedTokenAddress = '',
   showUnlock,
   value,
-  allTokens
+  allTokens,
+  selectModalProps = {}
 }) {
   const { t } = useTranslation()
 
@@ -417,6 +418,7 @@ export default function CurrencyInputPanel({
           onTokenSelect={onCurrencySelected}
           allBalances={allBalances}
           allTokens={allTokens}
+          {...selectModalProps}
         />
       )}
     </InputPanel>
@@ -428,7 +430,8 @@ function CurrencySelectModal({
   onDismiss,
   onTokenSelect,
   allBalances,
-  allTokens = {}
+  allTokens = {},
+  enableCreateExchange = true
 }) {
   const { t } = useTranslation()
 
@@ -537,7 +540,7 @@ function CurrencySelectModal({
     if (isAddress(searchQuery) && exchangeAddress === undefined) {
       return <TokenModalInfo>Searching for Exchange...</TokenModalInfo>
     }
-    if (isAddress(searchQuery) && exchangeAddress === ethers.constants.AddressZero) {
+    if (isAddress(searchQuery) && exchangeAddress === ethers.constants.AddressZero && enableCreateExchange) {
       return (
         <>
           <TokenModalInfo>{t('noExchange')}</TokenModalInfo>
