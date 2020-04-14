@@ -98,7 +98,7 @@ const ETH_TOKEN = 'ETH'
 // TODO display full rollup address somewhere
 export default function Bridge({ params = defaultBridgeParams }) {
   const [transferType, setTransferType] = useState(TransferType.toArb)
-  const [transferValue, setTransferValue] = useState()
+  const [transferValue, setTransferValue] = useState('0.0')
   const [selectedToken, setToken] = useState(ETH_TOKEN)
   const [modalOpen, setModalOpen] = useState(false)
 
@@ -165,9 +165,29 @@ export default function Bridge({ params = defaultBridgeParams }) {
     return Promise.resolve(maybePromise).then(() => setToken(address))
   }
 
-  const handleButtonClick = () => {
-    bridge.eth.deposit(transferValue).then((...args) => console.log('deposit complete', args)).catch(console.error)
-    // bridge.eth.withdraw(transferValue).then((...args) => console.log('deposit complete', args)).catch(console.error)
+  const handleButtonClick = async () => {
+    let tx
+    switch (transferType) {
+      case TransferType.toArb:
+        if (selectedToken === ETH_TOKEN) {
+          tx = bridge.eth.deposit(transferValue)
+        } else {
+          tx = bridge.token.deposit(selectedToken, transferValue)
+        }
+        break
+      case TransferType.fromArb:
+        if (selectedToken === ETH_TOKEN) {
+          tx = bridge.eth.withdraw(transferValue)
+        } else {
+          tx = bridge.token.withdraw(selectedToken, transferValue)
+        }
+        break
+      default:
+        throw new Error('unhandled transfer type', transferType)
+    }
+
+    await tx
+    setTransferValue('0')
   }
 
   // use existing unlock button in currency input panel to approve tokens
@@ -178,6 +198,7 @@ export default function Bridge({ params = defaultBridgeParams }) {
     selectModalProps: { enableCreateExchange: true },
     onCurrencySelected: handleSelectToken,
   }
+
   return (
     <>
       <OversizedPanel hideTop>
@@ -187,7 +208,7 @@ export default function Bridge({ params = defaultBridgeParams }) {
         </TransferTypeSelection>
         <Modal isOpen={modalOpen} onDismiss={() => { setModalOpen(false) }}>
           <TransferTypeModal>
-            {[TransferType.toArb, TransferType.fromArb].map(ttype => (
+            {Object.values(TransferType).map(ttype => (
               <ModalOption
                 key={ttype}
                 onClick={(...args) => {
@@ -210,6 +231,7 @@ export default function Bridge({ params = defaultBridgeParams }) {
         allTokens={combinedEthDetails}
         extraText={'Balance: ' + amountFormatter(combinedEthDetails[selectedToken].balance, 18, 4)}
         onValueChange={setTransferValue}
+        value={transferValue}
         {...inputPanelProps}
       // description={"Ethereum balance"}
       // errorMessage={inputError}
@@ -242,7 +264,7 @@ export default function Bridge({ params = defaultBridgeParams }) {
         // warning={highSlippageWarning || customSlippageError === 'warning'}
         >
           {/* text should provide destination context */}
-          {translated('Transfer to Arbitrum Wallet')}
+          {translated(`Transfer to ${transferType === TransferType.toArb ? 'Arbitrum' : 'Ethereum'} Wallet`)}
         </Button>
       </ButtonContainer>
     </>
