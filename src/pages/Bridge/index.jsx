@@ -144,7 +144,7 @@ export default function Bridge({ params = defaultBridgeParams }) {
     combinedEthDetails[addr] = {
       name: token.name,
       symbol: token.symbol,
-      decimals: token.units,
+      decimals: token.decimals,
       balance: balances.erc20[addr].balance,
       ethRate: ethers.constants.One,
       exchangeAddress: null,
@@ -159,7 +159,6 @@ export default function Bridge({ params = defaultBridgeParams }) {
   const handleSelectToken = (address) => {
     let maybePromise
     if (!bridgeTokens[address]) {
-      console.log('adding token')
       maybePromise = bridge.token.add(address, TokenType.ERC20)
     }
 
@@ -193,6 +192,26 @@ export default function Bridge({ params = defaultBridgeParams }) {
     setTransferValue('0')
   }
 
+  const displayLockboxBalance = () => {
+    let balance
+    if (selectedToken === ETH_TOKEN) {
+      balance = ethers.utils.formatEther(balances.eth.lockBoxBalance)
+    } else {
+      balance = amountFormatter(balances.erc20[selectedToken].lockBoxBalance, combinedEthDetails[selectedToken].decimals, 4)
+    }
+    return `${balance} ${combinedEthDetails[selectedToken].symbol}`
+  }
+
+  const withdrawLockbox = async () => {
+    setLoading(true)
+    if (selectedToken === ETH_TOKEN) {
+      await bridge.eth.withdrawLockBox()
+    } else {
+      await bridge.token.withdrawLockBox(selectedToken)
+    }
+    setLoading(false)
+  }
+
   // use existing unlock button in currency input panel to approve tokens
   // use transfer states to decide tokens
   const inputPanelProps = {
@@ -215,7 +234,6 @@ export default function Bridge({ params = defaultBridgeParams }) {
               <ModalOption
                 key={ttype}
                 onClick={(...args) => {
-                  console.log('select modal args', args)
                   setTransferType(ttype)
                   setModalOpen(false)
                 }}
@@ -226,6 +244,13 @@ export default function Bridge({ params = defaultBridgeParams }) {
             ))}
           </TransferTypeModal>
         </Modal>
+      </OversizedPanel>
+
+      <OversizedPanel hideTop>
+        <TransferTypeSelection>
+          Lockbox balance: {displayLockboxBalance()}
+          <span onClick={() => withdrawLockbox()}>{isLoading ? 'Loading...' : 'Withdraw'}</span>
+        </TransferTypeSelection>
       </OversizedPanel>
 
       <CurrencyInputPanel
