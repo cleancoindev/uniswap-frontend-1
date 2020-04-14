@@ -155,10 +155,16 @@ export default function Bridge({ params = defaultBridgeParams }) {
     }
   }
 
+  const handleInput = (value) => {
+    if (!isLoading) {
+      setTransferValue(value)
+    }
+  }
+
   // 0x8205bd0BcF13F90d25721CDD6643D7e8b557a3f5
   const handleSelectToken = (address) => {
     let maybePromise
-    if (!bridgeTokens[address]) {
+    if (address !== ETH_TOKEN && !combinedEthDetails[address]) {
       maybePromise = bridge.token.add(address, TokenType.ERC20)
     }
 
@@ -219,7 +225,11 @@ export default function Bridge({ params = defaultBridgeParams }) {
     selectedTokenAddress: selectedToken,
     selectModalProps: { enableCreateExchange: true },
     onCurrencySelected: handleSelectToken,
+    value: transferValue
   }
+
+  const inputDetails = transferType === TransferType.toArb ? combinedEthDetails : combinedArbDetails
+  const outputDetails = transferType === TransferType.toArb ? combinedArbDetails : combinedEthDetails
 
   return (
     <>
@@ -255,11 +265,10 @@ export default function Bridge({ params = defaultBridgeParams }) {
 
       <CurrencyInputPanel
         title={translated('input')}
-        allBalances={combinedEthDetails}
-        allTokens={combinedEthDetails}
-        extraText={'Balance: ' + amountFormatter(combinedEthDetails[selectedToken].balance, 18, 4)}
-        onValueChange={setTransferValue}
-        value={transferValue}
+        allBalances={inputDetails}
+        allTokens={inputDetails}
+        extraText={'Balance: ' + amountFormatter(inputDetails[selectedToken].balance, 18, 4)}
+        onValueChange={handleInput}
         {...inputPanelProps}
       // description={"Ethereum balance"}
       // errorMessage={inputError}
@@ -275,10 +284,9 @@ export default function Bridge({ params = defaultBridgeParams }) {
 
       <CurrencyInputPanel
         title={translated('output')}
-        allBalances={combinedArbDetails}
-        allTokens={combinedArbDetails}
-        extraText={'Balance: ' + amountFormatter(combinedArbDetails[selectedToken].balance, 18, 4)}
-        value={transferValue}
+        allBalances={outputDetails}
+        allTokens={outputDetails}
+        extraText={'Balance: ' + amountFormatter(outputDetails[selectedToken].balance, 18, 4)}
         disableTokenSelect
         {...inputPanelProps}
       // description={'output description'}
