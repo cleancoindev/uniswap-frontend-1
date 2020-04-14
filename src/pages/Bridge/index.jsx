@@ -101,6 +101,7 @@ export default function Bridge({ params = defaultBridgeParams }) {
   const [transferValue, setTransferValue] = useState('0.0')
   const [selectedToken, setToken] = useState(ETH_TOKEN)
   const [modalOpen, setModalOpen] = useState(false)
+  const [isLoading, setLoading] = useState(false)
 
   // const { connector, connectorName, library } = useWeb3Context()
   const { t: translated } = useTranslation()
@@ -166,6 +167,7 @@ export default function Bridge({ params = defaultBridgeParams }) {
   }
 
   const handleButtonClick = async () => {
+    setLoading(true)
     let tx
     switch (transferType) {
       case TransferType.toArb:
@@ -187,6 +189,7 @@ export default function Bridge({ params = defaultBridgeParams }) {
     }
 
     await tx
+    setLoading(false)
     setTransferValue('0')
   }
 
@@ -259,12 +262,12 @@ export default function Bridge({ params = defaultBridgeParams }) {
 
       <ButtonContainer>
         <Button
-          // disabled={!isValid || customSlippageError === 'invalid'}
+          disabled={isLoading}
           onClick={handleButtonClick}
         // warning={highSlippageWarning || customSlippageError === 'warning'}
         >
           {/* text should provide destination context */}
-          {translated(`Transfer to ${transferType === TransferType.toArb ? 'Arbitrum' : 'Ethereum'} Wallet`)}
+          {translated(isLoading ? 'Transferring...' : `Transfer to ${transferType === TransferType.toArb ? 'Arbitrum' : 'Ethereum'} Wallet`)}
         </Button>
       </ButtonContainer>
     </>
