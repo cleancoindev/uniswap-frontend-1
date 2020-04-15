@@ -6,7 +6,8 @@ import { useArbTokenBridge, TokenType } from 'arb-token-bridge/dist/hooks/useArb
 import { ethers } from 'ethers'
 import { lighten } from 'polished'
 
-import { Button } from '../../theme'
+import Circle from '../../assets/images/circle.svg'
+import { Button, Spinner } from '../../theme'
 import CurrencyInputPanel from '../../components/CurrencyInputPanel'
 import OversizedPanel from '../../components/OversizedPanel'
 import Modal from '../../components/Modal'
@@ -79,6 +80,28 @@ const ButtonContainer = styled.div`
     max-width: 20rem;
   }
 `
+
+const LockboxContainer = styled.div`
+  ${({ theme }) => theme.flexColumnNoWrap};
+  padding: 1rem 0;
+`
+
+const LockboxBalance = styled.div`
+  ${({ theme }) => theme.flexRowNoWrap};
+  align-items: center;
+  color: ${({ theme }) => theme.doveGray};
+  font-size: 0.75rem;
+  padding: 0.25rem 1rem 0;
+  justify-content: space-between;
+`
+
+const WithdrawLockBoxBtn = styled.span`
+  &:hover {
+    color: ${({ theme }) => lighten(0.1, theme.royalBlue)};
+    cursor: pointer;
+  }
+`
+
 
 // there should be some sort of explanation of how to view tutorials
 // to add a token, we can have an option in the token select area. but will that
@@ -164,7 +187,7 @@ export default function Bridge({ params = defaultBridgeParams }) {
   // 0x8205bd0BcF13F90d25721CDD6643D7e8b557a3f5
   const handleSelectToken = (address) => {
     let maybePromise
-    if (address !== ETH_TOKEN && !combinedEthDetails[address]) {
+    if (address !== ETH_TOKEN && !bridgeTokens[address]) {
       maybePromise = bridge.token.add(address, TokenType.ERC20)
     }
 
@@ -173,29 +196,36 @@ export default function Bridge({ params = defaultBridgeParams }) {
 
   const handleButtonClick = async () => {
     setLoading(true)
-    let tx
-    switch (transferType) {
-      case TransferType.toArb:
-        if (selectedToken === ETH_TOKEN) {
-          tx = bridge.eth.deposit(transferValue)
-        } else {
-          tx = bridge.token.deposit(selectedToken, transferValue)
-        }
-        break
-      case TransferType.fromArb:
-        if (selectedToken === ETH_TOKEN) {
-          tx = bridge.eth.withdraw(transferValue)
-        } else {
-          tx = bridge.token.withdraw(selectedToken, transferValue)
-        }
-        break
-      default:
-        throw new Error('unhandled transfer type', transferType)
-    }
 
-    await tx
-    setLoading(false)
-    setTransferValue('0')
+    try {
+      switch (transferType) {
+        case TransferType.toArb:
+          if (selectedToken === ETH_TOKEN) {
+            await bridge.eth.deposit(transferValue)
+          } else {
+            // TODO integrate with their unlock button
+            if (!bridgeTokens[selectedToken].allowed) {
+              await bridge.token.approve(selectedToken)
+            }
+            await bridge.token.deposit(selectedToken, transferValue)
+          }
+          break
+        case TransferType.fromArb:
+          if (selectedToken === ETH_TOKEN) {
+            await bridge.eth.withdraw(transferValue)
+          } else {
+            await bridge.token.withdraw(selectedToken, transferValue)
+          }
+          break
+        default:
+          throw new Error('unhandled transfer type', transferType)
+      }
+      setTransferValue('0')
+    } catch (e) {
+      throw new Error('failed to execute transfer', e)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const displayLockboxBalance = () => {
@@ -231,6 +261,8 @@ export default function Bridge({ params = defaultBridgeParams }) {
   const inputDetails = transferType === TransferType.toArb ? combinedEthDetails : combinedArbDetails
   const outputDetails = transferType === TransferType.toArb ? combinedArbDetails : combinedEthDetails
 
+  const showInputUnlock = transferType === TransferType.toArb && bridgeTokens[selectedToken]?.allowed
+
   return (
     <>
       <OversizedPanel hideTop>
@@ -243,7 +275,7 @@ export default function Bridge({ params = defaultBridgeParams }) {
             {Object.values(TransferType).map(ttype => (
               <ModalOption
                 key={ttype}
-                onClick={(...args) => {
+                onClick={() => {
                   setTransferType(ttype)
                   setModalOpen(false)
                 }}
@@ -257,10 +289,12 @@ export default function Bridge({ params = defaultBridgeParams }) {
       </OversizedPanel>
 
       <OversizedPanel hideTop>
-        <TransferTypeSelection>
-          Lockbox balance: {displayLockboxBalance()}
-          <span onClick={() => withdrawLockbox()}>{isLoading ? 'Loading...' : 'Withdraw'}</span>
-        </TransferTypeSelection>
+        <LockboxContainer>
+          <LockboxBalance>
+            Lockbox balance: {displayLockboxBalance()}
+            <WithdrawLockBoxBtn onClick={() => withdrawLockbox()} children={isLoading ? <Spinner src={Circle} alt={'Loading...'} /> : 'Withdraw'} />
+          </LockboxBalance>
+        </LockboxContainer>
       </OversizedPanel>
 
       <CurrencyInputPanel
@@ -269,6 +303,7 @@ export default function Bridge({ params = defaultBridgeParams }) {
         allTokens={inputDetails}
         extraText={'Balance: ' + amountFormatter(inputDetails[selectedToken].balance, 18, 4)}
         onValueChange={handleInput}
+        showUnlock={showInputUnlock} // only unlock for eth side balances
         {...inputPanelProps}
       // description={"Ethereum balance"}
       // errorMessage={inputError}
@@ -300,7 +335,10 @@ export default function Bridge({ params = defaultBridgeParams }) {
         // warning={highSlippageWarning || customSlippageError === 'warning'}
         >
           {/* text should provide destination context */}
-          {translated(isLoading ? 'Transferring...' : `Transfer to ${transferType === TransferType.toArb ? 'Arbitrum' : 'Ethereum'} Wallet`)}
+          {isLoading ?
+            <Spinner src={Circle} alt={'Loading...'} /> :
+            translated(`Transfer to ${transferType === TransferType.toArb ? 'Arbitrum' : 'Ethereum'} Wallet`)
+          }
         </Button>
       </ButtonContainer>
     </>
