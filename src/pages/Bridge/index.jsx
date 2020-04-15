@@ -4,7 +4,7 @@ import styled from 'styled-components'
 import { useTranslation } from 'react-i18next'
 import { useArbTokenBridge, TokenType } from 'arb-token-bridge/dist/hooks/useArbTokenBridge'
 import { ethers } from 'ethers'
-import { lighten } from 'polished'
+import { lighten, darken } from 'polished'
 
 import Circle from '../../assets/images/circle.svg'
 import { Button, Spinner } from '../../theme'
@@ -97,8 +97,15 @@ const LockboxBalance = styled.div`
 
 const WithdrawLockBoxBtn = styled.span`
   &:hover {
-    color: ${({ theme }) => lighten(0.1, theme.royalBlue)};
+    color: ${({ theme }) => theme.royalBlue};
     cursor: pointer;
+  }
+`
+
+const CurrencyInputDescription = styled.span`
+  color: ${({ theme }) => darken(0.2, theme.doveGray)} !important;
+  &:hover {
+    cursor: initial !important;
   }
 `
 
@@ -258,8 +265,14 @@ export default function Bridge({ params = defaultBridgeParams }) {
     value: transferValue
   }
 
-  const inputDetails = transferType === TransferType.toArb ? combinedEthDetails : combinedArbDetails
-  const outputDetails = transferType === TransferType.toArb ? combinedArbDetails : combinedEthDetails
+  const [
+    inputName,
+    inputDetails,
+    outputName,
+    outputDetails
+  ] = transferType === TransferType.toArb ?
+      ['Ethereum', combinedEthDetails, 'Arbitrum', combinedArbDetails]
+      : ['Arbitrum', combinedArbDetails, 'Ethereum', combinedEthDetails]
 
   const showInputUnlock = transferType === TransferType.toArb && bridgeTokens[selectedToken]?.allowed
 
@@ -292,39 +305,51 @@ export default function Bridge({ params = defaultBridgeParams }) {
         <LockboxContainer>
           <LockboxBalance>
             Lockbox balance: {displayLockboxBalance()}
-            <WithdrawLockBoxBtn onClick={() => withdrawLockbox()} children={isLoading ? <Spinner src={Circle} alt={'Loading...'} /> : 'Withdraw'} />
+            <WithdrawLockBoxBtn
+              onClick={() => withdrawLockbox()}
+              children={isLoading ?
+                <Spinner src={Circle} alt={'Loading...'} /> :
+                'Withdraw'
+              }
+            />
           </LockboxBalance>
         </LockboxContainer>
       </OversizedPanel>
 
       <CurrencyInputPanel
         title={translated('input')}
+        description={<CurrencyInputDescription children={`from ${inputName}`} />}
         allBalances={inputDetails}
         allTokens={inputDetails}
         extraText={'Balance: ' + amountFormatter(inputDetails[selectedToken].balance, 18, 4)}
         onValueChange={handleInput}
         showUnlock={showInputUnlock} // only unlock for eth side balances
         {...inputPanelProps}
-      // description={"Ethereum balance"}
       // errorMessage={inputError}
-      // disableTokenSelect // maybe cleaner to have own input for adding tokens
       />
 
       <OversizedPanel>
         <DownArrowBackground>
-          {/* could do a cool loading animation here modulating `active` */}
-          <DownArrow active={true} alt="arrow" />
+          <DownArrow
+            active={isLoading}
+            clickable
+            onClick={() => {
+              const next = transferType === TransferType.toArb ?
+                TransferType.fromArb :
+                TransferType.toArb
+              setTransferType(next)
+            }} alt="arrow" />
         </DownArrowBackground>
       </OversizedPanel>
 
       <CurrencyInputPanel
         title={translated('output')}
+        description={<CurrencyInputDescription children={`to ${outputName}`} />}
         allBalances={outputDetails}
         allTokens={outputDetails}
         extraText={'Balance: ' + amountFormatter(outputDetails[selectedToken].balance, 18, 4)}
         disableTokenSelect
         {...inputPanelProps}
-      // description={'output description'}
       // errorMessage={inputError}
       />
 
@@ -337,7 +362,7 @@ export default function Bridge({ params = defaultBridgeParams }) {
           {/* text should provide destination context */}
           {isLoading ?
             <Spinner src={Circle} alt={'Loading...'} /> :
-            translated(`Transfer to ${transferType === TransferType.toArb ? 'Arbitrum' : 'Ethereum'} Wallet`)
+            translated(`Transfer to ${outputName} Wallet`)
           }
         </Button>
       </ButtonContainer>
