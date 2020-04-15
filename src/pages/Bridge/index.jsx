@@ -5,8 +5,11 @@ import { useTranslation } from 'react-i18next'
 import { useArbTokenBridge, TokenType } from 'arb-token-bridge/dist/hooks/useArbTokenBridge'
 import { ethers } from 'ethers'
 import { lighten, darken } from 'polished'
+import Tooltip from '@reach/tooltip'
+import '@reach/tooltip/styles.css'
 
 import Circle from '../../assets/images/circle.svg'
+import { ReactComponent as QuestionMark } from '../../assets/images/question.svg'
 import { Button, Spinner } from '../../theme'
 import CurrencyInputPanel from '../../components/CurrencyInputPanel'
 import OversizedPanel from '../../components/OversizedPanel'
@@ -109,10 +112,9 @@ const CurrencyInputDescription = styled.span`
   }
 `
 
-
-// there should be some sort of explanation of how to view tutorials
-// to add a token, we can have an option in the token select area. but will that
-// be clear enough?
+const StyledQuestionMark = styled(QuestionMark)`
+  padding-left: 0.5rem;
+`
 
 // TODO symbol image search overrides for each symbol if possible
 // TODO create exchange when adding token?
@@ -123,9 +125,9 @@ const TransferType = {
 
 const ETH_TOKEN = 'ETH'
 
-// TODO handle contract not existing in arbitrum - here or in hook?
-// TODO always display lockbox balances + explain
 // TODO display full rollup address somewhere
+// TODO disable input if not unlocked, remove auto approve on transfer above
+// TODO transaction error handling
 export default function Bridge({ params = defaultBridgeParams }) {
   const [transferType, setTransferType] = useState(TransferType.toArb)
   const [transferValue, setTransferValue] = useState('0.0')
@@ -191,7 +193,6 @@ export default function Bridge({ params = defaultBridgeParams }) {
     }
   }
 
-  // 0x8205bd0BcF13F90d25721CDD6643D7e8b557a3f5
   const handleSelectToken = (address) => {
     let maybePromise
     if (address !== ETH_TOKEN && !bridgeTokens[address]) {
@@ -210,7 +211,6 @@ export default function Bridge({ params = defaultBridgeParams }) {
           if (selectedToken === ETH_TOKEN) {
             await bridge.eth.deposit(transferValue)
           } else {
-            // TODO integrate with their unlock button
             if (!bridgeTokens[selectedToken].allowed) {
               await bridge.token.approve(selectedToken)
             }
@@ -255,10 +255,7 @@ export default function Bridge({ params = defaultBridgeParams }) {
     setLoading(false)
   }
 
-  // use existing unlock button in currency input panel to approve tokens
-  // use transfer states to decide tokens
   const inputPanelProps = {
-    extraTextClickHander: () => balances.update(),
     selectedTokenAddress: selectedToken,
     selectModalProps: { enableCreateExchange: true },
     onCurrencySelected: handleSelectToken,
@@ -273,8 +270,12 @@ export default function Bridge({ params = defaultBridgeParams }) {
   ] = transferType === TransferType.toArb ?
       ['Ethereum', combinedEthDetails, 'Arbitrum', combinedArbDetails]
       : ['Arbitrum', combinedArbDetails, 'Ethereum', combinedEthDetails]
+  const inputBalanceFormatted = amountFormatter(inputDetails[selectedToken].balance, inputDetails[selectedToken].decimals, 4)
+  const outputBalanceFormatted = amountFormatter(outputDetails[selectedToken].balance, outputDetails[selectedToken].decimals, 4)
 
-  const showInputUnlock = transferType === TransferType.toArb && bridgeTokens[selectedToken]?.allowed
+  const showInputUnlock = transferType === TransferType.toArb &&
+    selectedToken !== ETH_TOKEN &&
+    !bridgeTokens[selectedToken].allowed
 
   return (
     <>
@@ -304,14 +305,32 @@ export default function Bridge({ params = defaultBridgeParams }) {
       <OversizedPanel hideTop>
         <LockboxContainer>
           <LockboxBalance>
-            Lockbox balance: {displayLockboxBalance()}
-            <WithdrawLockBoxBtn
-              onClick={() => withdrawLockbox()}
-              children={isLoading ?
-                <Spinner src={Circle} alt={'Loading...'} /> :
-                'Withdraw'
-              }
-            />
+            <span>Lockbox balance: {displayLockboxBalance()}</span>
+            <span style={{ display: 'flex', alignItems: 'center' }}>
+              <WithdrawLockBoxBtn
+                onClick={() => withdrawLockbox()}
+                children={isLoading ?
+                  <Spinner src={Circle} alt={'Loading...'} /> :
+                  'Withdraw'
+                }
+              />
+              <Tooltip
+                label={<span>When withdrawing tokens from an Arbitrum Rollup, they are held in a smart contract lock box.</span>}
+                style={{
+                  background: 'hsla(0, 0%, 0%, 0.75)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '24px',
+                  padding: '0.5em 1em',
+                  marginTop: '-64px',
+                  marginLeft: '48px',
+                  maxWidth: '150px',
+                  whiteSpace: 'normal'
+                }}
+              >
+                <StyledQuestionMark />
+              </Tooltip>
+            </span>
           </LockboxBalance>
         </LockboxContainer>
       </OversizedPanel>
@@ -321,7 +340,8 @@ export default function Bridge({ params = defaultBridgeParams }) {
         description={<CurrencyInputDescription children={`from ${inputName}`} />}
         allBalances={inputDetails}
         allTokens={inputDetails}
-        extraText={'Balance: ' + amountFormatter(inputDetails[selectedToken].balance, 18, 4)}
+        extraText={`Balance: ${inputBalanceFormatted}`}
+        extraTextClickHander={() => setTransferValue(inputBalanceFormatted)}
         onValueChange={handleInput}
         showUnlock={showInputUnlock} // only unlock for eth side balances
         {...inputPanelProps}
@@ -347,7 +367,8 @@ export default function Bridge({ params = defaultBridgeParams }) {
         description={<CurrencyInputDescription children={`to ${outputName}`} />}
         allBalances={outputDetails}
         allTokens={outputDetails}
-        extraText={'Balance: ' + amountFormatter(outputDetails[selectedToken].balance, 18, 4)}
+        extraText={`Balance: ${outputBalanceFormatted}`}
+        extraTextClickHander={() => setTransferValue(outputBalanceFormatted)}
         disableTokenSelect
         {...inputPanelProps}
       // errorMessage={inputError}
