@@ -9,6 +9,11 @@ import { useBetaMessageManager } from '../../contexts/LocalStorage'
 
 const tabOrder = [
   {
+    path: '/bridge',
+    textKey: 'Bridge',
+    regex: /\/bridge/
+  },
+  {
     path: '/swap',
     textKey: 'swap',
     regex: /\/swap/
@@ -22,11 +27,6 @@ const tabOrder = [
     path: '/add-liquidity',
     textKey: 'pool',
     regex: /\/add-liquidity|\/remove-liquidity|\/create-exchange.*/
-  },
-  {
-    path: '/bridge',
-    textKey: 'Bridge',
-    regex: /\/bridge/
   }
 ]
 
