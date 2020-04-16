@@ -266,12 +266,10 @@ export default function Bridge({ params = defaultBridgeParams }) {
     inputName,
     inputDetails,
     outputName,
-    outputDetails
   ] = transferType === TransferType.toArb ?
-      ['Ethereum', combinedEthDetails, 'Arbitrum', combinedArbDetails]
-      : ['Arbitrum', combinedArbDetails, 'Ethereum', combinedEthDetails]
+      ['Ethereum', combinedEthDetails, 'Arbitrum']
+      : ['Arbitrum', combinedArbDetails, 'Ethereum']
   const inputBalanceFormatted = amountFormatter(inputDetails[selectedToken].balance, inputDetails[selectedToken].decimals, 4)
-  const outputBalanceFormatted = amountFormatter(outputDetails[selectedToken].balance, outputDetails[selectedToken].decimals, 4)
 
   const showInputUnlock = transferType === TransferType.toArb &&
     selectedToken !== ETH_TOKEN &&
@@ -348,7 +346,7 @@ export default function Bridge({ params = defaultBridgeParams }) {
       // errorMessage={inputError}
       />
 
-      <OversizedPanel>
+      <OversizedPanel hideBottom>
         <DownArrowBackground>
           <DownArrow
             active={isLoading}
@@ -361,18 +359,6 @@ export default function Bridge({ params = defaultBridgeParams }) {
             }} alt="arrow" />
         </DownArrowBackground>
       </OversizedPanel>
-
-      <CurrencyInputPanel
-        title={translated('output')}
-        description={<CurrencyInputDescription children={`to ${outputName}`} />}
-        allBalances={outputDetails}
-        allTokens={outputDetails}
-        extraText={`Balance: ${outputBalanceFormatted}`}
-        extraTextClickHander={() => setTransferValue(outputBalanceFormatted)}
-        disableTokenSelect
-        {...inputPanelProps}
-      // errorMessage={inputError}
-      />
 
       <ButtonContainer>
         <Button
